@@ -22,6 +22,15 @@ typedef struct
 
 typedef struct
 {
+    double x;
+    double y;
+    int w;
+    int h;
+    SDL_Texture *texture;
+} Object;
+
+typedef struct
+{
     int move : 2;
     int turn : 2;
     int fov : 2;

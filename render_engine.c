@@ -228,16 +228,28 @@ void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
 
 double calculateObjectScale(int w, Camera *cam, double v)
 {
-    return w * SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
+    return SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
+}
+
+void renderCourse(){
+    projectCameraViewOfSurfaceOntoTexture(target, RENDER_RES_W, RENDER_RES_H, source, cam);
+    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
+    SDL_RenderCopy(renderer, target, NULL, &fieldRect);
+}
+
+void renderObject(Object *o){
+    double u, v;
+    surfaceToCameraCoord(cam, o->x, o->y, &u, &v);
+    double scale = calculateObjectScale(o->w, cam, v);
+    SDL_Rect r = {u * SCREEN_WIDTH, ((1 + 2 * v) / 3) * SCREEN_HEIGHT};
+    SDL_RenderCopy(renderer,o->texture,NULL,&r);
 }
 
 void renderScene()
 {
     SDL_RenderClear(renderer);
 
-    projectCameraViewOfSurfaceOntoTexture(target, RENDER_RES_W, RENDER_RES_H, source, cam);
-    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
-    SDL_RenderCopy(renderer, target, NULL, &fieldRect);
+    renderCourse();
 
     SDL_RenderPresent(renderer);
 }
