@@ -8,6 +8,7 @@ SDL_Renderer *renderer = NULL;
 SDL_PixelFormat *format = NULL;
 
 SDL_Surface *source;
+Uint32 courseCol = 0xFF76B0F5;
 SDL_Texture *target;
 
 Camera *cam;
@@ -284,7 +285,7 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
         cameraToSurfaceCoord(cam, u, v, &x, &y);
         if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
         {
-            pixels[i] = SDL_MapRGBA(format, 0, 0, 0, 0);
+            pixels[i] = courseCol;
         }
         else
         {
@@ -384,7 +385,7 @@ void renderObjects(Object *objs[], int nObjs, Camera *cam)
     for (i = 0; i < nObjs; i++)
     {
         surfaceToCameraCoord(cam, objs[i]->x, objs[i]->y, &u, &v);
-        if (0 <= u && u <= 1 && 0 <= v && v <= 1)
+        if (-0.25 < u && u < 1.25 && v<1.5)
         {
             inView[nInView] = objs[i];
             us[nInView] = u;
