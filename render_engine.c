@@ -11,10 +11,12 @@ SDL_Surface *source;
 Uint32 courseCol = 0xFF76B0F5;
 SDL_Texture *target;
 
+World *world;
+
 Camera *cam;
 InputState input;
 
-Sprite *objs[15];
+Sprite *sprites[15];
 
 int quit = SDL_FALSE;
 
@@ -24,10 +26,11 @@ int main(int argc, char *argv[])
 {
     init();
 
-    loadImage();
-    createDisplayTexture();
-    cam = createCamera(1000, 1000, 0, M_PI / 4, 50);
-    makeObjs();
+    // loadImage();
+    // createDisplayTexture();
+    world = createWorld("course.png", 0xFF76B0F5);
+    cam = createCamera(1000, 1000, 0, 0.8, 50);
+    makeSprites();
 
     SDL_Event e;
 
@@ -77,16 +80,33 @@ void close()
     SDL_FreeFormat(format);
     format = NULL;
 
-    SDL_DestroyTexture(objs[0]->texture);
+    SDL_DestroyTexture(world->sprites[0]->texture);
     for (int i = 0; i < 15; i++)
     {
-        free(objs[i]);
+        free(world->sprites[i]);
     }
-    // free(objs);
-    // objs = NULL;
+    // free(sprites);
+    // sprites = NULL;
+
+    free(world);
+    world = NULL;
 
     SDL_Quit();
     IMG_Quit();
+}
+
+World *createWorld(char *imgFile, Uint32 color)
+{
+    World *w = malloc(sizeof(w));
+
+    SDL_Surface *s = IMG_Load("course.png");
+    w->srcImg = SDL_ConvertSurface(s, format, 0);
+    SDL_FreeSurface(s);
+
+    w->target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RENDER_RES_W, RENDER_RES_H);
+    w->color = color;
+
+    return w;
 }
 
 void loadImage()
@@ -102,14 +122,15 @@ void createDisplayTexture()
     SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
 }
 
-void makeObjs()
+void makeSprites()
 {
+    world->sprites = malloc(15 * sizeof(Sprite));
+    world->nSprites = 15;
     SDL_Texture *tex = IMG_LoadTexture(renderer, "object.png");
     int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450}, {1260, 450}, {580, 1030}, {1290, 150}, {1500, 170}, {1920, 140}, {1950, 440}, {1770, 1220}, {1890, 1420}, {790, 1470}, {1940, 1250}, {1690, 980}};
     int w;
     int h;
     SDL_QueryTexture(tex, NULL, NULL, &w, &h);
-    // objs = malloc(15 * sizeof(objs[0]));
     Sprite *ptr;
     for (int i = 0; i < 15; i++)
     {
@@ -119,7 +140,7 @@ void makeObjs()
         ptr->w = 25;
         ptr->h = 25 * h / w;
         ptr->texture = tex;
-        objs[i] = ptr;
+        world->sprites[i] = ptr;
     }
 }
 
@@ -330,11 +351,12 @@ double calculateSpriteScale(int w, Camera *cam, double v)
     return SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
 }
 
-void renderCourse()
+void renderCourse(World *w, Camera *cam)
 {
-    projectCameraViewOfSurfaceOntoTexture(target, RENDER_RES_W, RENDER_RES_H, source, cam);
+    projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H, w->srcImg, cam);
     SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
-    SDL_RenderCopy(renderer, target, NULL, &fieldRect);
+    SDL_RenderCopy(renderer, w->target, NULL, &fieldRect);
+    renderSprites(w->sprites, w->nSprites, cam);
 }
 
 void renderSprite(Sprite *o, double u, double v, Camera *cam)
@@ -353,7 +375,7 @@ void swap(double arr[], int a, int b)
     arr[b] = temp;
 }
 
-void sortByV(Sprite *objs[], double us[], double vs[], int start, int end)
+void sortByV(Sprite *sprites[], double us[], double vs[], int start, int end)
 {
     if (start >= end)
         return;
@@ -374,30 +396,30 @@ void sortByV(Sprite *objs[], double us[], double vs[], int start, int end)
             break;
         swap(us, a, b);
         swap(vs, a, b);
-        Sprite *temp = objs[a];
-        objs[a] = objs[b];
-        objs[b] = temp;
+        Sprite *temp = sprites[a];
+        sprites[a] = sprites[b];
+        sprites[b] = temp;
         a++;
         b--;
     }
-    sortByV(objs, us, vs, start, b);
-    sortByV(objs, us, vs, a, end);
+    sortByV(sprites, us, vs, start, b);
+    sortByV(sprites, us, vs, a, end);
 }
 
-void renderSprites(Sprite *objs[], int nObjs, Camera *cam)
+void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
 {
-    double us[nObjs];
-    double vs[nObjs];
+    double us[nsprites];
+    double vs[nsprites];
     double u, v;
-    Sprite *inView[nObjs];
+    Sprite *inView[nsprites];
     int nInView = 0;
     int i;
-    for (i = 0; i < nObjs; i++)
+    for (i = 0; i < nsprites; i++)
     {
-        surfaceToCameraCoord(cam, objs[i]->x, objs[i]->y, &u, &v);
+        surfaceToCameraCoord(cam, sprites[i]->x, sprites[i]->y, &u, &v);
         if (-0.25 < u && u < 1.25 && v < 1.5)
         {
-            inView[nInView] = objs[i];
+            inView[nInView] = sprites[i];
             us[nInView] = u;
             vs[nInView] = v;
             nInView++;
@@ -415,8 +437,7 @@ void renderScene()
 {
     SDL_RenderClear(renderer);
 
-    renderCourse();
-    renderSprites(objs, 15, cam);
+    renderCourse(world, cam);
 
     SDL_RenderPresent(renderer);
 }

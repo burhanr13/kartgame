@@ -31,6 +31,15 @@ typedef struct
 
 typedef struct
 {
+    SDL_Surface *srcImg;
+    SDL_Texture *target;
+    Uint32 color;
+    Sprite **sprites;
+    int nSprites;
+} World;
+
+typedef struct
+{
     int move : 2;
     int turn : 2;
     int fov : 2;
@@ -42,13 +51,15 @@ void close();
 void loadImage();
 void createDisplayTexture();
 Camera *createCamera(int x, int y, double angle, double fov, int minDist);
-void makeObjs();
+World *createWorld(char *imgFile, Uint32 color);
+void makeSprites();
 void handleEvent(SDL_Event e);
 void updateCamera();
 void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam);
 void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y);
 Uint32 bilinear(double x, double y, Uint32 *pixels, int w);
 void renderSprite(Sprite *o, double u, double v, Camera *cam);
+void renderSprites(Sprite *sprites[], int nsprites, Camera *cam);
 void renderScene();
 
 #endif
