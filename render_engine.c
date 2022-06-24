@@ -14,7 +14,7 @@ SDL_Texture *target;
 Camera *cam;
 InputState input;
 
-Object *objs[15];
+Sprite *objs[15];
 
 int quit = SDL_FALSE;
 
@@ -105,19 +105,15 @@ void createDisplayTexture()
 void makeObjs()
 {
     SDL_Texture *tex = IMG_LoadTexture(renderer, "object.png");
-    int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300},
-                      {1150, 450}, {1260, 450}, {580, 1030},
-                      {1290, 150}, {1500, 170}, {1920, 140},
-                      {1950, 440}, {1770, 1220}, {1890, 1420},
-                      {790, 1470}, {1940, 1250}, {1690, 980}};
+    int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450}, {1260, 450}, {580, 1030}, {1290, 150}, {1500, 170}, {1920, 140}, {1950, 440}, {1770, 1220}, {1890, 1420}, {790, 1470}, {1940, 1250}, {1690, 980}};
     int w;
     int h;
     SDL_QueryTexture(tex, NULL, NULL, &w, &h);
     // objs = malloc(15 * sizeof(objs[0]));
-    Object *ptr;
+    Sprite *ptr;
     for (int i = 0; i < 15; i++)
     {
-        ptr = malloc(sizeof(Object));
+        ptr = malloc(sizeof(Sprite));
         ptr->x = pos[i][0];
         ptr->y = pos[i][1];
         ptr->w = 25;
@@ -276,7 +272,7 @@ Uint32 magFilter(double x, double y, Uint32 *pixels, int w)
             col = interpColor(col, c2, y - 0.5);
         }
     }
-    
+
     return col;
 }
 
@@ -324,12 +320,12 @@ void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
     double relX = x - cam->x;
     double relY = cam->y - y;
     double twoUMinusOne = (relX * cos(cam->angle) - relY * sin(cam->angle)) /
-                          (relY * cos(cam->angle) + relX * sin(cam->angle)) / tan(cam->fov/2);
+                          (relY * cos(cam->angle) + relX * sin(cam->angle)) / tan(cam->fov / 2);
     *u = (twoUMinusOne + 1) / 2;
     *v = cam->minDist / relX * (sin(cam->angle) + tan(cam->fov / 2) * cos(cam->angle) * twoUMinusOne);
 }
 
-double calculateObjectScale(int w, Camera *cam, double v)
+double calculateSpriteScale(int w, Camera *cam, double v)
 {
     return SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
 }
@@ -341,9 +337,9 @@ void renderCourse()
     SDL_RenderCopy(renderer, target, NULL, &fieldRect);
 }
 
-void renderObject(Object *o, double u, double v, Camera *cam)
+void renderSprite(Sprite *o, double u, double v, Camera *cam)
 {
-    double scale = calculateObjectScale(o->w, cam, v);
+    double scale = calculateSpriteScale(o->w, cam, v);
     double scaledW = scale * o->w;
     double scaledH = scale * o->h;
     SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2, ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH, scaledW, scaledH};
@@ -357,7 +353,7 @@ void swap(double arr[], int a, int b)
     arr[b] = temp;
 }
 
-void sortByV(Object *objs[], double us[], double vs[], int start, int end)
+void sortByV(Sprite *objs[], double us[], double vs[], int start, int end)
 {
     if (start >= end)
         return;
@@ -378,7 +374,7 @@ void sortByV(Object *objs[], double us[], double vs[], int start, int end)
             break;
         swap(us, a, b);
         swap(vs, a, b);
-        Object *temp = objs[a];
+        Sprite *temp = objs[a];
         objs[a] = objs[b];
         objs[b] = temp;
         a++;
@@ -388,18 +384,18 @@ void sortByV(Object *objs[], double us[], double vs[], int start, int end)
     sortByV(objs, us, vs, a, end);
 }
 
-void renderObjects(Object *objs[], int nObjs, Camera *cam)
+void renderSprites(Sprite *objs[], int nObjs, Camera *cam)
 {
     double us[nObjs];
     double vs[nObjs];
     double u, v;
-    Object *inView[nObjs];
+    Sprite *inView[nObjs];
     int nInView = 0;
     int i;
     for (i = 0; i < nObjs; i++)
     {
         surfaceToCameraCoord(cam, objs[i]->x, objs[i]->y, &u, &v);
-        if (-0.25 < u && u < 1.25 && v<1.5)
+        if (-0.25 < u && u < 1.25 && v < 1.5)
         {
             inView[nInView] = objs[i];
             us[nInView] = u;
@@ -407,11 +403,11 @@ void renderObjects(Object *objs[], int nObjs, Camera *cam)
             nInView++;
         }
     }
-    sortByV(inView, us, vs, 0, nInView-1);
+    sortByV(inView, us, vs, 0, nInView - 1);
 
     for (i = 0; i < nInView; i++)
     {
-        renderObject(inView[i], us[i], vs[i], cam);
+        renderSprite(inView[i], us[i], vs[i], cam);
     }
 }
 
@@ -420,7 +416,7 @@ void renderScene()
     SDL_RenderClear(renderer);
 
     renderCourse();
-    renderObjects(objs, 15, cam);
+    renderSprites(objs, 15, cam);
 
     SDL_RenderPresent(renderer);
 }

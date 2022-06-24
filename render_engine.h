@@ -27,7 +27,7 @@ typedef struct
     int w;
     int h;
     SDL_Texture *texture;
-} Object;
+} Sprite;
 
 typedef struct
 {
@@ -48,7 +48,7 @@ void updateCamera();
 void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam);
 void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y);
 Uint32 bilinear(double x, double y, Uint32 *pixels, int w);
-void renderObject(Object *o, double u, double v, Camera *cam);
+void renderSprite(Sprite *o, double u, double v, Camera *cam);
 void renderScene();
 
 #endif
