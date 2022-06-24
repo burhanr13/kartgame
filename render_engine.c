@@ -218,14 +218,14 @@ void updateCamera()
 Uint32 interpColor(Uint32 c0, Uint32 c1, double t)
 {
     int a0, a1, r0, r1, g0, g1, b0, b1;
-    a0 = (c0 >> 24) % (1 << 8);
-    a1 = (c1 >> 24) % (1 << 8);
-    r0 = (c0 >> 16) % (1 << 8);
-    r1 = (c1 >> 16) % (1 << 8);
-    g0 = (c0 >> 8) % (1 << 8);
-    g1 = (c1 >> 8) % (1 << 8);
-    b0 = (c0 >> 0) % (1 << 8);
-    b1 = (c1 >> 0) % (1 << 8);
+    a0 = (c0 >> 24) & 0xff;
+    a1 = (c1 >> 24) & 0xff;
+    r0 = (c0 >> 16) & 0xff;
+    r1 = (c1 >> 16) & 0xff;
+    g0 = (c0 >> 8) & 0xff;
+    g1 = (c1 >> 8) & 0xff;
+    b0 = (c0 >> 0) & 0xff;
+    b1 = (c1 >> 0) & 0xff;
 
     int a = a0 + (a1 - a0) * t;
     int r = r0 + (r1 - r0) * t;
@@ -246,23 +246,37 @@ Uint32 magFilter(double x, double y, Uint32 *pixels, int w)
     Uint32 r = pixels[pY * w + pX + 1];
     Uint32 u = pixels[(pY - 1) * w + pX];
     Uint32 d = pixels[(pY + 1) * w + pX];
+    Uint32 c2 = 0;
 
     if (x < 0.5)
     {
         col = interpColor(col, l, 0.5 - x);
+        if (y < 0.5)
+        {
+            c2 = interpColor(u, pixels[(pY - 1) * w + pX - 1], 0.5 - x);
+            col = interpColor(col, c2, 0.5 - y);
+        }
+        else
+        {
+            c2 = interpColor(d, pixels[(pY + 1) * w + pX - 1], 0.5 - x);
+            col = interpColor(col, c2, y - 0.5);
+        }
     }
     else
     {
         col = interpColor(col, r, x - 0.5);
+        if (y < 0.5)
+        {
+            c2 = interpColor(u, pixels[(pY - 1) * w + pX + 1], x - 0.5);
+            col = interpColor(col, c2, 0.5 - y);
+        }
+        else
+        {
+            c2 = interpColor(d, pixels[(pY + 1) * w + pX + 1], x - 0.5);
+            col = interpColor(col, c2, y - 0.5);
+        }
     }
-    if (y < 0.5)
-    {
-        col = interpColor(col, u, 0.5 - y);
-    }
-    else
-    {
-        col = interpColor(col, d, y - 0.5);
-    }
+    
     return col;
 }
 
