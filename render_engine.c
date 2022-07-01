@@ -3,101 +3,12 @@
 #include <SDL2/SDL_image.h>
 #include <math.h>
 
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
-SDL_PixelFormat *format = NULL;
-
-SDL_Surface *source;
-Uint32 courseCol = 0xFF76B0F5;
-SDL_Texture *target;
-
-World *world;
-
-Camera *cam;
-InputState input;
-
-Sprite *sprites[15];
-
-int quit = SDL_FALSE;
-
-int debugCounter = 0;
-
-int main(int argc, char *argv[])
-{
-    init();
-
-    // loadImage();
-    // createDisplayTexture();
-    world = createWorld("course.png", 0xFF76B0F5);
-    cam = createCamera(1000, 1000, 0, 0.8, 50);
-    makeSprites();
-
-    SDL_Event e;
-
-    while (!quit)
-    {
-        while (SDL_PollEvent(&e))
-        {
-            handleEvent(e);
-        }
-        updateCamera();
-
-        renderScene();
-        debugCounter++;
-    }
-
-    close();
-
-    return 0;
-}
-
-void init()
-{
-    SDL_Init(SDL_INIT_VIDEO);
-    IMG_Init(IMG_INIT_PNG);
-
-    window = SDL_CreateWindow("Projections", SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
-                              SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    SDL_SetRenderDrawColor(renderer, 100, 100, 255, 255);
-
-    format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-}
-
-void close()
-{
-    SDL_FreeSurface(source);
-    source = NULL;
-    SDL_DestroyTexture(target);
-    target = NULL;
-
-    SDL_DestroyWindow(window);
-    window = NULL;
-    SDL_DestroyRenderer(renderer);
-    renderer = NULL;
-
-    SDL_FreeFormat(format);
-    format = NULL;
-
-    SDL_DestroyTexture(world->sprites[0]->texture);
-    for (int i = 0; i < 15; i++)
-    {
-        free(world->sprites[i]);
-    }
-    // free(sprites);
-    // sprites = NULL;
-
-    free(world);
-    world = NULL;
-
-    SDL_Quit();
-    IMG_Quit();
-}
+extern SDL_Renderer *renderer;
+extern SDL_PixelFormat *format;
 
 World *createWorld(char *imgFile, Uint32 color)
 {
-    World *w = malloc(sizeof(w));
+    World *w = malloc(sizeof(World));
 
     SDL_Surface *s = IMG_Load("course.png");
     w->srcImg = SDL_ConvertSurface(s, format, 0);
@@ -109,39 +20,13 @@ World *createWorld(char *imgFile, Uint32 color)
     return w;
 }
 
-void loadImage()
-{
-    SDL_Surface *s = IMG_Load("course.png");
-    source = SDL_ConvertSurface(s, format, 0);
-    SDL_FreeSurface(s);
-}
-
-void createDisplayTexture()
-{
-    target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RENDER_RES_W, RENDER_RES_H);
-    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
-}
-
-void makeSprites()
-{
-    world->sprites = malloc(15 * sizeof(Sprite));
-    world->nSprites = 15;
-    SDL_Texture *tex = IMG_LoadTexture(renderer, "object.png");
-    int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450}, {1260, 450}, {580, 1030}, {1290, 150}, {1500, 170}, {1920, 140}, {1950, 440}, {1770, 1220}, {1890, 1420}, {790, 1470}, {1940, 1250}, {1690, 980}};
-    int w;
-    int h;
-    SDL_QueryTexture(tex, NULL, NULL, &w, &h);
-    Sprite *ptr;
-    for (int i = 0; i < 15; i++)
-    {
-        ptr = malloc(sizeof(Sprite));
-        ptr->x = pos[i][0];
-        ptr->y = pos[i][1];
-        ptr->w = 25;
-        ptr->h = 25 * h / w;
-        ptr->texture = tex;
-        world->sprites[i] = ptr;
-    }
+void initSprite(Sprite *s,SDL_Texture *tex, double x,double y,double w){
+    s->x = x;
+    s->y = y;
+    s->texture = tex;
+    SDL_QueryTexture(tex, NULL, NULL, &s->w, &s->h);
+    s->h *= w / s->w;
+    s->w = w;
 }
 
 Camera *createCamera(int x, int y, double angle, double fov, int minDist)
@@ -153,83 +38,6 @@ Camera *createCamera(int x, int y, double angle, double fov, int minDist)
     c->fov = fov;
     c->minDist = minDist;
     return c;
-}
-
-void handleEvent(SDL_Event e)
-{
-    switch (e.type)
-    {
-    case SDL_QUIT:
-        quit = SDL_TRUE;
-        break;
-    case SDL_KEYUP:
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_w:
-        case SDLK_s:
-            input.move = 0;
-            break;
-        case SDLK_a:
-        case SDLK_d:
-            input.turn = 0;
-            break;
-        case SDLK_UP:
-        case SDLK_DOWN:
-            input.minD = 0;
-            break;
-        case SDLK_LEFT:
-        case SDLK_RIGHT:
-            input.fov = 0;
-            break;
-        }
-        break;
-    case SDL_KEYDOWN:
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_w:
-            input.move = 1;
-            break;
-        case SDLK_s:
-            input.move = -1;
-            break;
-        case SDLK_a:
-            input.turn = -1;
-            break;
-        case SDLK_d:
-            input.turn = 1;
-            break;
-        case SDLK_UP:
-            input.minD = 1;
-            break;
-        case SDLK_DOWN:
-            input.minD = -1;
-            break;
-        case SDLK_LEFT:
-            input.fov = -1;
-            break;
-        case SDLK_RIGHT:
-            input.fov = 1;
-            break;
-        }
-        break;
-    }
-}
-
-void updateCamera()
-{
-
-    cam->angle += input.turn * 0.01;
-    cam->x += sin(cam->angle) * input.move * 3;
-    cam->y -= cos(cam->angle) * input.move * 3;
-
-    cam->fov += input.fov * 0.01;
-    if (cam->fov < 0)
-        cam->fov = 0;
-    if (cam->fov > M_PI)
-        cam->fov = M_PI;
-    cam->minDist += input.minD * 2;
-    if (cam->minDist < 0)
-        cam->minDist = 0;
 }
 
 Uint32 interpColor(Uint32 c0, Uint32 c1, double t)
@@ -297,7 +105,15 @@ Uint32 magFilter(double x, double y, Uint32 *pixels, int w)
     return col;
 }
 
-void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam)
+void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y)
+{
+    double vDist = cam->minDist / v;
+    double uDist = tan(cam->fov / 2) * (2 * u - 1);
+    *x = cam->x + vDist * (sin(cam->angle) + uDist * cos(cam->angle));
+    *y = cam->y - vDist * (cos(cam->angle) - uDist * sin(cam->angle));
+}
+
+void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam, Uint32 color)
 {
     void *pixelData = NULL;
     int pitch;
@@ -316,7 +132,7 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
         cameraToSurfaceCoord(cam, u, v, &x, &y);
         if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
         {
-            pixels[i] = courseCol;
+            pixels[i] = color;
         }
         else
         {
@@ -326,14 +142,6 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
 
     SDL_UnlockSurface(src);
     SDL_UnlockTexture(target);
-}
-
-void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y)
-{
-    double vDist = cam->minDist / v;
-    double uDist = tan(cam->fov / 2) * (2 * u - 1);
-    *x = cam->x + vDist * (sin(cam->angle) + uDist * cos(cam->angle));
-    *y = cam->y - vDist * (cos(cam->angle) - uDist * sin(cam->angle));
 }
 
 void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
@@ -349,14 +157,6 @@ void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
 double calculateSpriteScale(int w, Camera *cam, double v)
 {
     return SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
-}
-
-void renderCourse(World *w, Camera *cam)
-{
-    projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H, w->srcImg, cam);
-    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
-    SDL_RenderCopy(renderer, w->target, NULL, &fieldRect);
-    renderSprites(w->sprites, w->nSprites, cam);
 }
 
 void renderSprite(Sprite *o, double u, double v, Camera *cam)
@@ -433,11 +233,10 @@ void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
     }
 }
 
-void renderScene()
+void renderCourse(World *w, Camera *cam)
 {
-    SDL_RenderClear(renderer);
-
-    renderCourse(world, cam);
-
-    SDL_RenderPresent(renderer);
+    projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H, w->srcImg, cam, w->color);
+    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
+    SDL_RenderCopy(renderer, w->target, NULL, &fieldRect);
+    renderSprites(w->sprites, w->nSprites, cam);
 }
