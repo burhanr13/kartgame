@@ -36,7 +36,7 @@ void init()
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
-    window = SDL_CreateWindow("Projections", SDL_WINDOWPOS_UNDEFINED,
+    window = SDL_CreateWindow("Kart Game", SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH,
                               SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -77,7 +77,7 @@ void makeSprites()
 {
     world->sprites = malloc(15 * sizeof(Sprite *));
     world->nSprites = 15;
-    SDL_Texture *tex = IMG_LoadTexture(renderer, "object.png");
+    SDL_Texture *tex = IMG_LoadTexture(renderer, "resources/object.png");
     int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450}, {1260, 450}, {580, 1030}, {1290, 150}, {1500, 170}, {1920, 140}, {1950, 440}, {1770, 1220}, {1890, 1420}, {790, 1470}, {1940, 1250}, {1690, 980}};
     int w;
     int h;
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 {
     init();
 
-    world = createWorld("course.png", 0xFF76B0F5);
+    world = createWorld("resources/course.png", 0xFF76B0F5);
     cam = createCamera(1000, 1000, 0, 0.8, 50);
     makeSprites();
 
@@ -196,7 +196,6 @@ int main(int argc, char *argv[])
         updateCamera();
 
         renderScene();
-        debugCounter++;
     }
 
     close();

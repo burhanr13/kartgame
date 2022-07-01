@@ -10,7 +10,7 @@ World *createWorld(char *imgFile, Uint32 color)
 {
     World *w = malloc(sizeof(World));
 
-    SDL_Surface *s = IMG_Load("course.png");
+    SDL_Surface *s = IMG_Load(imgFile);
     w->srcImg = SDL_ConvertSurface(s, format, 0);
     SDL_FreeSurface(s);
 
