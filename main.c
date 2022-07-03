@@ -28,9 +28,6 @@ Sprite *sprites[15];
 
 int quit = SDL_FALSE;
 
-int debugCounter = 0;
-
-
 void init()
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -86,7 +83,7 @@ void makeSprites()
     for (int i = 0; i < 15; i++)
     {
         ptr = malloc(sizeof(Sprite));
-        initSprite(ptr, tex, pos[i][0], pos[i][1], 25);
+        initSprite(ptr, tex, pos[i][0], pos[i][1], 17);
         world->sprites[i] = ptr;
     }
 }
@@ -154,18 +151,16 @@ void handleEvent(SDL_Event e)
 void updateCamera()
 {
 
-    cam->angle += input.turn * 0.01;
-    cam->x += sin(cam->angle) * input.move * 3;
-    cam->y -= cos(cam->angle) * input.move * 3;
+    cam->angle += input.turn * 0.05;
+    cam->x += sin(cam->angle) * input.move * 10;
+    cam->y -= cos(cam->angle) * input.move * 10;
 
-    cam->fov += input.fov * 0.01;
-    if (cam->fov < 0)
-        cam->fov = 0;
-    if (cam->fov > M_PI)
-        cam->fov = M_PI;
-    cam->minDist += input.minD * 2;
-    if (cam->minDist < 0)
-        cam->minDist = 0;
+    cam->f += input.fov * 0.01;
+    if (cam->f < 0)
+        cam->f = 0;
+    cam->height += input.minD * 2;
+    if (cam->height < 0)
+        cam->height = 0;
 }
 
 void renderScene()
@@ -182,7 +177,7 @@ int main(int argc, char *argv[])
     init();
 
     world = createWorld("resources/course.png", 0xFF76B0F5);
-    cam = createCamera(1000, 1000, 0, 0.8, 50);
+    cam = createCamera(1000, 1000, 0, 3, 10);
     makeSprites();
 
     SDL_Event e;

@@ -10,7 +10,7 @@
 #define RENDER_RES_W 512
 #define RENDER_RES_H 512
 
-Camera *createCamera(int x, int y, double angle, double fov, int minDist);
+Camera *createCamera(int x, int y, double angle, double f, int minDist);
 World *createWorld(char *imgFile, Uint32 color);
 void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w);
 void renderCourse(World *world, Camera *camera);

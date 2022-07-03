@@ -6,6 +6,8 @@
 extern SDL_Renderer *renderer;
 extern SDL_PixelFormat *format;
 
+const double RENDER_ASPECT_RATIO = (double)SCREEN_HEIGHT / SCREEN_WIDTH * 2 / 3;
+
 World *createWorld(char *imgFile, Uint32 color)
 {
     World *w = malloc(sizeof(World));
@@ -20,7 +22,8 @@ World *createWorld(char *imgFile, Uint32 color)
     return w;
 }
 
-void initSprite(Sprite *s,SDL_Texture *tex, double x,double y,double w){
+void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w)
+{
     s->x = x;
     s->y = y;
     s->texture = tex;
@@ -29,14 +32,14 @@ void initSprite(Sprite *s,SDL_Texture *tex, double x,double y,double w){
     s->w = w;
 }
 
-Camera *createCamera(int x, int y, double angle, double fov, int minDist)
+Camera *createCamera(int x, int y, double angle, double f, int minDist)
 {
     Camera *c = malloc(sizeof(*c));
     c->x = x;
     c->y = y;
     c->angle = angle;
-    c->fov = fov;
-    c->minDist = minDist;
+    c->f = f;
+    c->height = minDist;
     return c;
 }
 
@@ -107,10 +110,31 @@ Uint32 magFilter(double x, double y, Uint32 *pixels, int w)
 
 void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y)
 {
-    double vDist = cam->minDist / v;
-    double uDist = tan(cam->fov / 2) * (2 * u - 1);
-    *x = cam->x + vDist * (sin(cam->angle) + uDist * cos(cam->angle));
-    *y = cam->y - vDist * (cos(cam->angle) - uDist * sin(cam->angle));
+    if(v==0)
+        return;
+    double rotX = cam->height * (2 * u - 1) / (RENDER_ASPECT_RATIO * v);
+    double rotY = cam->height * cam->f / v;
+    *x = cam->x + rotX * cos(cam->angle) + rotY * sin(cam->angle);
+    *y = cam->y + rotX * sin(cam->angle) - rotY * cos(cam->angle);
+}
+
+void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
+{
+    double relX = x - cam->x;
+    double relY = cam->y - y;
+    double rotX = relX * cos(cam->angle) - relY * sin(cam->angle);
+    double rotY = relX * sin(cam->angle) + relY * cos(cam->angle);
+    if(rotY==0)
+        return;
+    *u = (RENDER_ASPECT_RATIO * rotX * cam->f / rotY + 1) / 2;
+    *v = cam->height * cam->f / rotY;
+}
+
+double calculateSpriteScale(Camera *cam, double v)
+{
+    if (cam->height == 0)
+        return 0;
+    return SCREEN_HEIGHT * v / (3 * cam->height);
 }
 
 void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam, Uint32 color)
@@ -130,6 +154,7 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
         u = (double)(i % targetW) / targetW;
         v = (double)(i / targetW) / targetH;
         cameraToSurfaceCoord(cam, u, v, &x, &y);
+
         if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
         {
             pixels[i] = color;
@@ -144,26 +169,13 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
     SDL_UnlockTexture(target);
 }
 
-void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
-{
-    double relX = x - cam->x;
-    double relY = cam->y - y;
-    double twoUMinusOne = (relX * cos(cam->angle) - relY * sin(cam->angle)) /
-                          (relY * cos(cam->angle) + relX * sin(cam->angle)) / tan(cam->fov / 2);
-    *u = (twoUMinusOne + 1) / 2;
-    *v = cam->minDist / relX * (sin(cam->angle) + tan(cam->fov / 2) * cos(cam->angle) * twoUMinusOne);
-}
-
-double calculateSpriteScale(int w, Camera *cam, double v)
-{
-    return SCREEN_WIDTH * v / (2 * cam->minDist * tan(cam->fov / 2));
-}
-
 void renderSprite(Sprite *o, double u, double v, Camera *cam)
 {
-    double scale = calculateSpriteScale(o->w, cam, v);
+    double scale = calculateSpriteScale(cam, v);
     double scaledW = scale * o->w;
     double scaledH = scale * o->h;
+    if(scaledW < 1 || scaledH < 1)
+        return;
     SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2, ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH, scaledW, scaledH};
     SDL_RenderCopy(renderer, o->texture, NULL, &r);
 }

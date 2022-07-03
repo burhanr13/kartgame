@@ -8,8 +8,8 @@ typedef struct camera_s
     double x;
     double y;
     double angle;
-    double fov;
-    int minDist;
+    double f;
+    double height;
 } Camera;
 
 typedef struct sprite_s

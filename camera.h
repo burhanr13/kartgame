@@ -3,9 +3,9 @@
 
 #include "types.h"
 
-#define CAM_FOV 0.9
-#define CAM_MINDIST 60
-#define CAM_FOLLOWDIST 75
+#define CAM_F 1.7
+#define CAM_HEIGHT 10
+#define CAM_FOLLOWDIST 20
 
 KartFollowCam *createFollowCam(Kart *kart);
 void updateFollowCamera(KartFollowCam *c);
