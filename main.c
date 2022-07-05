@@ -3,28 +3,13 @@
 #include <SDL2/SDL_image.h>
 #include <math.h>
 
-typedef struct
-{
-    int move : 2;
-    int turn : 2;
-    int fov : 2;
-    int minD : 2;
-} InputState;
-
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_PixelFormat *format = NULL;
 
-SDL_Surface *source;
-Uint32 courseCol = 0xFF76B0F5;
-SDL_Texture *target;
-
 World *world;
 
 Camera *cam;
-InputState input;
-
-Sprite *sprites[15];
 
 int quit = SDL_FALSE;
 
@@ -44,10 +29,6 @@ void init()
 
 void close()
 {
-    SDL_FreeSurface(source);
-    source = NULL;
-    SDL_DestroyTexture(target);
-    target = NULL;
 
     SDL_DestroyWindow(window);
     window = NULL;
@@ -58,12 +39,13 @@ void close()
     format = NULL;
 
     SDL_DestroyTexture(world->sprites[0]->texture);
-    for (int i = 0; i < 15; i++)
+
+    for (int i = 0; i < world->nSprites; i++)
     {
         free(world->sprites[i]);
     }
 
-    free(world);
+    destroyWorld(world);
     world = NULL;
 
     SDL_Quit();
@@ -95,70 +77,22 @@ void handleEvent(SDL_Event e)
     case SDL_QUIT:
         quit = SDL_TRUE;
         break;
-    case SDL_KEYUP:
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_w:
-        case SDLK_s:
-            input.move = 0;
-            break;
-        case SDLK_a:
-        case SDLK_d:
-            input.turn = 0;
-            break;
-        case SDLK_UP:
-        case SDLK_DOWN:
-            input.minD = 0;
-            break;
-        case SDLK_LEFT:
-        case SDLK_RIGHT:
-            input.fov = 0;
-            break;
-        }
-        break;
-    case SDL_KEYDOWN:
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_w:
-            input.move = 1;
-            break;
-        case SDLK_s:
-            input.move = -1;
-            break;
-        case SDLK_a:
-            input.turn = -1;
-            break;
-        case SDLK_d:
-            input.turn = 1;
-            break;
-        case SDLK_UP:
-            input.minD = 1;
-            break;
-        case SDLK_DOWN:
-            input.minD = -1;
-            break;
-        case SDLK_LEFT:
-            input.fov = -1;
-            break;
-        case SDLK_RIGHT:
-            input.fov = 1;
-            break;
-        }
-        break;
     }
 }
 
 void updateCamera()
 {
+    const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
 
-    cam->angle += input.turn * 0.05;
-    cam->x += sin(cam->angle) * input.move * 10;
-    cam->y -= cos(cam->angle) * input.move * 10;
+    cam->angle += (keyStates[SDL_SCANCODE_D]-keyStates[SDL_SCANCODE_A]) * 0.05;
+    int move = keyStates[SDL_SCANCODE_W] - keyStates[SDL_SCANCODE_S];
+    cam->x += sin(cam->angle) * move * 10;
+    cam->y -= cos(cam->angle) * move * 10;
 
-    cam->f += input.fov * 0.01;
+    cam->f += (keyStates[SDL_SCANCODE_RIGHT]-keyStates[SDL_SCANCODE_LEFT]) * 0.1;
     if (cam->f < 0)
         cam->f = 0;
-    cam->height += input.minD * 2;
+    cam->height += (keyStates[SDL_SCANCODE_UP]-keyStates[SDL_SCANCODE_DOWN]) * 1;
     if (cam->height < 0)
         cam->height = 0;
 }
@@ -177,7 +111,7 @@ int main(int argc, char *argv[])
     init();
 
     world = createWorld("resources/course.png", 0xFF76B0F5);
-    cam = createCamera(1000, 1000, 0, 3, 10);
+    cam = createCamera(1000, 1000, 0, 1.7, 20);
     makeSprites();
 
     SDL_Event e;

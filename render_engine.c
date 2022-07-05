@@ -6,7 +6,7 @@
 extern SDL_Renderer *renderer;
 extern SDL_PixelFormat *format;
 
-const double RENDER_ASPECT_RATIO = (double)SCREEN_HEIGHT / SCREEN_WIDTH * 2 / 3;
+const double RENDER_ASPECT_RATIO = (double)SCREEN_HEIGHT / SCREEN_WIDTH * 4 / 3;
 
 World *createWorld(char *imgFile, Uint32 color)
 {
@@ -20,6 +20,13 @@ World *createWorld(char *imgFile, Uint32 color)
     w->color = color;
 
     return w;
+}
+
+void destroyWorld(World *w)
+{
+    SDL_FreeSurface(w->srcImg);
+    SDL_DestroyTexture(w->target);
+    free(w);
 }
 
 void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w)
@@ -110,7 +117,7 @@ Uint32 magFilter(double x, double y, Uint32 *pixels, int w)
 
 void cameraToSurfaceCoord(Camera *cam, double u, double v, double *x, double *y)
 {
-    if(v==0)
+    if (v == 0)
         return;
     double rotX = cam->height * (2 * u - 1) / (RENDER_ASPECT_RATIO * v);
     double rotY = cam->height * cam->f / v;
@@ -124,7 +131,7 @@ void surfaceToCameraCoord(Camera *cam, double x, double y, double *u, double *v)
     double relY = cam->y - y;
     double rotX = relX * cos(cam->angle) - relY * sin(cam->angle);
     double rotY = relX * sin(cam->angle) + relY * cos(cam->angle);
-    if(rotY==0)
+    if (rotY == 0)
         return;
     *u = (RENDER_ASPECT_RATIO * rotX * cam->f / rotY + 1) / 2;
     *v = cam->height * cam->f / rotY;
@@ -134,7 +141,7 @@ double calculateSpriteScale(Camera *cam, double v)
 {
     if (cam->height == 0)
         return 0;
-    return SCREEN_HEIGHT * v / (3 * cam->height);
+    return SCREEN_WIDTH * RENDER_ASPECT_RATIO * v / (2 * cam->height);
 }
 
 void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam, Uint32 color)
@@ -174,7 +181,7 @@ void renderSprite(Sprite *o, double u, double v, Camera *cam)
     double scale = calculateSpriteScale(cam, v);
     double scaledW = scale * o->w;
     double scaledH = scale * o->h;
-    if(scaledW < 1 || scaledH < 1)
+    if (scaledW < 1 || scaledH < 1)
         return;
     SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2, ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH, scaledW, scaledH};
     SDL_RenderCopy(renderer, o->texture, NULL, &r);

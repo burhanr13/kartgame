@@ -4,7 +4,7 @@
 #include "types.h"
 
 #define CAM_F 1.7
-#define CAM_HEIGHT 10
+#define CAM_HEIGHT 20
 #define CAM_FOLLOWDIST 20
 
 KartFollowCam *createFollowCam(Kart *kart);

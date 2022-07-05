@@ -12,6 +12,7 @@
 
 Camera *createCamera(int x, int y, double angle, double f, int minDist);
 World *createWorld(char *imgFile, Uint32 color);
+void destroyWorld(World *w);
 void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w);
 void renderCourse(World *world, Camera *camera);
 
