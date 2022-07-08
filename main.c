@@ -1,4 +1,6 @@
 #include "render_engine.h"
+#include "camera.h"
+#include "kart.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <math.h>
@@ -7,9 +9,20 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_PixelFormat *format = NULL;
 
+Uint64 lastFrameTime = 0;
+int frameCount = 0;
+Uint32 elapsedTime = 0;
+double fps;
+
 World *world;
 
 Camera *cam;
+
+KartFollowCam *kCam;
+
+Kart *kart;
+
+SDL_Texture *kartTex;
 
 int quit = SDL_FALSE;
 
@@ -25,6 +38,8 @@ void init()
     SDL_SetRenderDrawColor(renderer, 100, 100, 255, 255);
 
     format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
+
+    kartTex = IMG_LoadTexture(renderer, "resources/driver.png");
 }
 
 void close()
@@ -38,9 +53,13 @@ void close()
     SDL_FreeFormat(format);
     format = NULL;
 
-    SDL_DestroyTexture(world->sprites[0]->texture);
+    SDL_DestroyTexture(kartTex);
+    free(kart);
+    free(kCam);
 
-    for (int i = 0; i < world->nSprites; i++)
+    SDL_DestroyTexture(world->sprites[1]->texture);
+
+    for (int i = 1; i < world->nSprites; i++)
     {
         free(world->sprites[i]);
     }
@@ -101,7 +120,7 @@ void renderScene()
 {
     SDL_RenderClear(renderer);
 
-    renderCourse(world, cam);
+    renderCourse(world, &kCam->cam);
 
     SDL_RenderPresent(renderer);
 }
@@ -111,8 +130,12 @@ int main(int argc, char *argv[])
     init();
 
     world = createWorld("resources/course.png", 0xFF76B0F5);
-    cam = createCamera(1000, 1000, 0, 1.7, 20);
     makeSprites();
+
+    kart = createKart(1000, 1000, 0, kartTex, 10);
+    kCam = createFollowCam(kart);
+
+    world->sprites[0] = &kart->s;
 
     SDL_Event e;
 
@@ -122,9 +145,17 @@ int main(int argc, char *argv[])
         {
             handleEvent(e);
         }
-        updateCamera();
+        //updateCamera();
+        updateKart(kart);
+        updateFollowCamera(kCam);
 
         renderScene();
+
+        frameCount++;
+        elapsedTime = SDL_GetTicks64()-lastFrameTime;
+        lastFrameTime = SDL_GetTicks64();
+        fps = 1000 * (double) frameCount / SDL_GetTicks64();
+        printf("%f\n", fps);
     }
 
     close();

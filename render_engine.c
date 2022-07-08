@@ -39,17 +39,6 @@ void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w)
     s->w = w;
 }
 
-Camera *createCamera(int x, int y, double angle, double f, int minDist)
-{
-    Camera *c = malloc(sizeof(*c));
-    c->x = x;
-    c->y = y;
-    c->angle = angle;
-    c->f = f;
-    c->height = minDist;
-    return c;
-}
-
 Uint32 interpColor(Uint32 c0, Uint32 c1, double t)
 {
     int a0, a1, r0, r1, g0, g1, b0, b1;
@@ -156,19 +145,38 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
     double u, v;
     double x, y;
 
-    for (int i = 0; i < targetW * targetH; i++)
-    {
-        u = (double)(i % targetW) / targetW;
-        v = (double)(i / targetW) / targetH;
-        cameraToSurfaceCoord(cam, u, v, &x, &y);
+    double cosa = cos(cam->angle);
+    double sina = sin(cam->angle);
+    double rotXmod;
+    double rotX, rotY;
+    double xMod, yMod;
 
-        if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
+    for (int i = 1; i < targetH; i++)
+    {
+        v = (double)i / targetH;
+
+        rotXmod = cam->height / (RENDER_ASPECT_RATIO * v);
+        rotY = cam->height * cam->f / v;
+        xMod = cam->x + rotY * sina;
+        yMod = cam->y - rotY * cosa;
+
+        for (int j = 0; j < targetW; j++)
         {
-            pixels[i] = color;
-        }
-        else
-        {
-            pixels[i] = magFilter(x, y, srcPixels, src->w);
+            u = (double)j / targetW;
+            rotX = rotXmod * (2 * u - 1);
+
+            x = xMod + rotX * cosa;
+            y = yMod + rotX * sina;
+
+            if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
+            {
+                pixels[i * targetW + j] = color;
+            }
+            else
+            {
+                //pixels[i * targetW + j] = magFilter(x, y, srcPixels, src->w);
+                pixels[i * targetW + j] = srcPixels[(int)y * src->w + (int)x];
+            }
         }
     }
 
@@ -181,56 +189,31 @@ void renderSprite(Sprite *o, double u, double v, Camera *cam)
     double scale = calculateSpriteScale(cam, v);
     double scaledW = scale * o->w;
     double scaledH = scale * o->h;
-    if (scaledW < 1 || scaledH < 1)
+    if (scaledW < 1 || scaledH < 1 || scaledW > SCREEN_WIDTH || scaledH > SCREEN_HEIGHT)
         return;
     SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2, ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH, scaledW, scaledH};
     SDL_RenderCopy(renderer, o->texture, NULL, &r);
 }
 
-void swap(double arr[], int a, int b)
+struct SpriteUV
 {
-    double temp = arr[a];
-    arr[a] = arr[b];
-    arr[b] = temp;
-}
+    Sprite *s;
+    double u;
+    double v;
+};
 
-void sortByV(Sprite *sprites[], double us[], double vs[], int start, int end)
+int cmpV(const void *a, const void *b)
 {
-    if (start >= end)
-        return;
-    double pivot = vs[(start + end) / 2];
-    int a = start;
-    int b = end;
-    while (a < b)
-    {
-        while (vs[a] < pivot)
-        {
-            a++;
-        }
-        while (vs[b] > pivot)
-        {
-            b--;
-        }
-        if (a > b)
-            break;
-        swap(us, a, b);
-        swap(vs, a, b);
-        Sprite *temp = sprites[a];
-        sprites[a] = sprites[b];
-        sprites[b] = temp;
-        a++;
-        b--;
-    }
-    sortByV(sprites, us, vs, start, b);
-    sortByV(sprites, us, vs, a, end);
+    struct SpriteUV m = *(struct SpriteUV *)a;
+    struct SpriteUV n = *(struct SpriteUV *)b;
+    return (m.v > n.v) ? 1 : (m.v < n.v) ? -1
+                                         : 0;
 }
 
 void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
 {
-    double us[nsprites];
-    double vs[nsprites];
     double u, v;
-    Sprite *inView[nsprites];
+    struct SpriteUV inView[nsprites];
     int nInView = 0;
     int i;
     for (i = 0; i < nsprites; i++)
@@ -238,17 +221,18 @@ void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
         surfaceToCameraCoord(cam, sprites[i]->x, sprites[i]->y, &u, &v);
         if (-0.25 < u && u < 1.25 && v < 1.5)
         {
-            inView[nInView] = sprites[i];
-            us[nInView] = u;
-            vs[nInView] = v;
+            inView[nInView].s = sprites[i];
+            inView[nInView].u = u;
+            inView[nInView].v = v;
             nInView++;
         }
     }
-    sortByV(inView, us, vs, 0, nInView - 1);
+
+    qsort(inView, nInView, sizeof(struct SpriteUV), cmpV);
 
     for (i = 0; i < nInView; i++)
     {
-        renderSprite(inView[i], us[i], vs[i], cam);
+        renderSprite(inView[i].s, inView[i].u, inView[i].v, cam);
     }
 }
 

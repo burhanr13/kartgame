@@ -5,8 +5,7 @@
 
 typedef struct camera_s
 {
-    double x;
-    double y;
+    double x, y;
     double angle;
     double f;
     double height;
@@ -14,10 +13,8 @@ typedef struct camera_s
 
 typedef struct sprite_s
 {
-    double x;
-    double y;
-    int w;
-    int h;
+    double x, y;
+    int w, h;
     SDL_Texture *texture;
 } Sprite;
 
