@@ -1,6 +1,6 @@
-#include "render_engine.h"
 #include "camera.h"
 #include "kart.h"
+#include "render_engine.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <math.h>
@@ -12,7 +12,7 @@ SDL_PixelFormat *format = NULL;
 Uint64 lastFrameTime = 0;
 int frameCount = 0;
 Uint32 elapsedTime = 0;
-double fps;
+float fps;
 
 World *world;
 
@@ -99,23 +99,6 @@ void handleEvent(SDL_Event e)
     }
 }
 
-void updateCamera()
-{
-    const Uint8 *keyStates = SDL_GetKeyboardState(NULL);
-
-    cam->angle += (keyStates[SDL_SCANCODE_D]-keyStates[SDL_SCANCODE_A]) * 0.05;
-    int move = keyStates[SDL_SCANCODE_W] - keyStates[SDL_SCANCODE_S];
-    cam->x += sin(cam->angle) * move * 10;
-    cam->y -= cos(cam->angle) * move * 10;
-
-    cam->f += (keyStates[SDL_SCANCODE_RIGHT]-keyStates[SDL_SCANCODE_LEFT]) * 0.1;
-    if (cam->f < 0)
-        cam->f = 0;
-    cam->height += (keyStates[SDL_SCANCODE_UP]-keyStates[SDL_SCANCODE_DOWN]) * 1;
-    if (cam->height < 0)
-        cam->height = 0;
-}
-
 void renderScene()
 {
     SDL_RenderClear(renderer);
@@ -123,6 +106,14 @@ void renderScene()
     renderCourse(world, &kCam->cam);
 
     SDL_RenderPresent(renderer);
+}
+
+void updateTimeValues()
+{
+    frameCount++;
+    elapsedTime = SDL_GetTicks64() - lastFrameTime;
+    lastFrameTime = SDL_GetTicks64();
+    fps = 1000 * (float)frameCount / SDL_GetTicks64();
 }
 
 int main(int argc, char *argv[])
@@ -145,17 +136,14 @@ int main(int argc, char *argv[])
         {
             handleEvent(e);
         }
-        //updateCamera();
+
         updateKart(kart);
         updateFollowCamera(kCam);
 
         renderScene();
 
-        frameCount++;
-        elapsedTime = SDL_GetTicks64()-lastFrameTime;
-        lastFrameTime = SDL_GetTicks64();
-        fps = 1000 * (double) frameCount / SDL_GetTicks64();
-        printf("%f\n", fps);
+        updateTimeValues();
+        printf("%.0f fps\n", fps);
     }
 
     close();

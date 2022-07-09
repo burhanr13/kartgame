@@ -1,8 +1,8 @@
 #ifndef RENDER_ENGINE_H
 #define RENDER_ENGINE_H
 
-#include <SDL2/SDL.h>
 #include "types.h"
+#include <SDL2/SDL.h>
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -12,7 +12,7 @@
 
 World *createWorld(char *imgFile, Uint32 color);
 void destroyWorld(World *w);
-void initSprite(Sprite *s, SDL_Texture *tex, double x, double y, double w);
+void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, float w);
 void renderCourse(World *world, Camera *camera);
 
 #endif

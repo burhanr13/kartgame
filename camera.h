@@ -7,7 +7,7 @@
 #define CAM_HEIGHT 20
 #define CAM_FOLLOWDIST 70
 
-Camera *createCamera(int x, int y, double angle, double f, int height);
+Camera *createCamera(float x, float y, float z, float angle, float f);
 KartFollowCam *createFollowCam(Kart *kart);
 void updateFollowCamera(KartFollowCam *c);
 

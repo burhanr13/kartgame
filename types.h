@@ -5,15 +5,14 @@
 
 typedef struct camera_s
 {
-    double x, y;
-    double angle;
-    double f;
-    double height;
+    float x, y, z;
+    float angle;
+    float f;
 } Camera;
 
 typedef struct sprite_s
 {
-    double x, y;
+    float x, y, z;
     int w, h;
     SDL_Texture *texture;
 } Sprite;
@@ -30,15 +29,15 @@ typedef struct world_s
 typedef struct kart_s
 {
     Sprite s;
-    double rot;
-    double speed;
+    float rot;
+    float speed;
 } Kart;
 
 typedef struct followcam_s
 {
     Camera cam;
     Kart *kart;
-    double followDist;
+    float followDist;
 } KartFollowCam;
 
 #endif
