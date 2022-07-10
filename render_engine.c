@@ -29,14 +29,14 @@ void destroyWorld(World *w)
     free(w);
 }
 
-void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, float w)
+void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, int w)
 {
     s->x = x;
     s->y = y;
     s->z = 0;
     s->texture = tex;
     SDL_QueryTexture(tex, NULL, NULL, &s->w, &s->h);
-    s->h *= w / s->w;
+    s->h *= (float)w / s->w;
     s->w = w;
 }
 

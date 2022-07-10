@@ -11,7 +11,7 @@ SDL_PixelFormat *format = NULL;
 
 Uint64 lastFrameTime = 0;
 int frameCount = 0;
-Uint32 elapsedTime = 0;
+float elapsedTime = 0;
 float fps;
 
 World *world;
@@ -89,9 +89,9 @@ void makeSprites()
     }
 }
 
-void handleEvent(SDL_Event e)
+void handleEvent(SDL_Event *e)
 {
-    switch (e.type)
+    switch (e->type)
     {
     case SDL_QUIT:
         quit = SDL_TRUE;
@@ -111,7 +111,7 @@ void renderScene()
 void updateTimeValues()
 {
     frameCount++;
-    elapsedTime = SDL_GetTicks64() - lastFrameTime;
+    elapsedTime = (float)(SDL_GetTicks64() - lastFrameTime) / 1000;
     lastFrameTime = SDL_GetTicks64();
     fps = 1000 * (float)frameCount / SDL_GetTicks64();
 }
@@ -134,7 +134,8 @@ int main(int argc, char *argv[])
     {
         while (SDL_PollEvent(&e))
         {
-            handleEvent(e);
+            handleEvent(&e);
+            kartHandleEvent(kart, &e);
         }
 
         updateKart(kart);
@@ -143,7 +144,6 @@ int main(int argc, char *argv[])
         renderScene();
 
         updateTimeValues();
-        printf("%.0f fps\n", fps);
     }
 
     close();

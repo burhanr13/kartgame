@@ -12,7 +12,7 @@
 
 World *createWorld(char *imgFile, Uint32 color);
 void destroyWorld(World *w);
-void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, float w);
+void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, int w);
 void renderCourse(World *world, Camera *camera);
 
 #endif
