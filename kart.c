@@ -17,6 +17,9 @@ Kart *createKart(float x, float y, float rot, SDL_Texture *tex, int w)
     memset(&kart->flags, 0, sizeof(kart->flags));
     kart->info.MAX_SPEED = 300;
     kart->info.TURN_SPEED = 2;
+    kart->info.INIT_DRIFT_TURN = 1;
+    kart->info.MIN_DRIFT_TURN = 0.1;
+    kart->info.MAX_DRIFT_TURN = 2;
     kart->info.ACCELERATION = 200;
     kart->info.TURN_MULT = 0.7;
     kart->info.FRICTION = 200;
@@ -39,9 +42,31 @@ void kartHandleEvent(Kart *k, SDL_Event *e)
             break;
         case SDLK_a:
             k->flags.turnL = e->type == SDL_KEYDOWN;
+            // if (e->type == SDL_KEYUP && !k->flags.turnR)
+            // {
+            //     k->flags.driftL = k->flags.driftR = 0;
+            // }
             break;
         case SDLK_d:
             k->flags.turnR = e->type == SDL_KEYDOWN;
+            // if (e->type == SDL_KEYUP && !k->flags.turnL)
+            // {
+            //     k->flags.driftL = k->flags.driftR = 0;
+            // }
+            break;
+        case SDLK_SPACE:
+            if (e->type == SDL_KEYDOWN && !e->key.repeat)
+            {
+                k->flags.driftL = k->flags.turnL;
+                k->flags.driftR = k->flags.turnR;
+                k->rot -= (k->flags.driftR - k->flags.driftL) * M_PI_4;
+                k->driftTurnSpeed = k->info.INIT_DRIFT_TURN;
+                k->speed *= 0.75;
+            }
+            else if (e->type == SDL_KEYUP)
+            {
+                k->flags.driftL = k->flags.driftR = 0;
+            }
             break;
         }
         break;
@@ -55,17 +80,32 @@ void kartMove(Kart *k)
     k->s.y -= acSpeed * cosf(k->rot);
 }
 
+void kartTranslateAngle(Kart *k, float angle, float distance)
+{
+    k->s.x += distance * sinf(k->rot + angle);
+    k->s.y -= distance * cosf(k->rot + angle);
+}
+
 void updateKart(Kart *k)
 {
+    int driftDir = k->flags.driftR - k->flags.driftL;
+    int turnDir = k->flags.turnR - k->flags.turnL;
 
-    if (k->flags.turnL)
+    if (driftDir != 0)
     {
-        k->rot -= k->info.TURN_SPEED * elapsedTime;
+        k->driftTurnSpeed += driftDir * turnDir * 1 * elapsedTime;
+
+        if (k->driftTurnSpeed > k->info.MAX_DRIFT_TURN)
+            k->driftTurnSpeed = k->info.MAX_DRIFT_TURN;
+        if (k->driftTurnSpeed < k->info.MIN_DRIFT_TURN)
+            k->driftTurnSpeed = k->info.MIN_DRIFT_TURN;
+
+        k->rot -= driftDir * k->driftTurnSpeed * elapsedTime;
+        kartTranslateAngle(k, driftDir * M_PI_2, k->speed * elapsedTime);
+        return;
     }
-    else if (k->flags.turnR)
-    {
-        k->rot += k->info.TURN_SPEED * elapsedTime;
-    }
+
+    k->rot -= turnDir * k->info.TURN_SPEED * elapsedTime;
 
     if (k->flags.isAccel)
     {

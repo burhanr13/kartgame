@@ -31,17 +31,23 @@ typedef struct kart_s
     Sprite s;
     float rot;
     float speed;
+    float driftTurnSpeed;
     struct{
         int isAccel : 1;
         int isDecel : 1;
         int turnR : 1;
         int turnL : 1;
+        int driftR : 1;
+        int driftL : 1;
     } flags;
     struct{
         float ACCELERATION;
         float MAX_SPEED;
         float TURN_SPEED;
         float TURN_MULT;
+        float INIT_DRIFT_TURN;
+        float MIN_DRIFT_TURN;
+        float MAX_DRIFT_TURN;
         float FRICTION;
     } info;
 } Kart;
