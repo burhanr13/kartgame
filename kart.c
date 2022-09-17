@@ -93,7 +93,7 @@ void updateKart(Kart *k)
 
     if (driftDir != 0)
     {
-        k->driftTurnSpeed += driftDir * turnDir * 1 * elapsedTime;
+        k->driftTurnSpeed += driftDir * turnDir * 2 * elapsedTime;
 
         if (k->driftTurnSpeed > k->info.MAX_DRIFT_TURN)
             k->driftTurnSpeed = k->info.MAX_DRIFT_TURN;
