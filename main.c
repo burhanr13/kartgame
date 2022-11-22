@@ -42,7 +42,7 @@ void init()
     kartTex = IMG_LoadTexture(renderer, "resources/driver.png");
 }
 
-void close()
+void end()
 {
 
     SDL_DestroyWindow(window);
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
         updateTimeValues();
     }
 
-    close();
+    end();
 
     return 0;
 }
