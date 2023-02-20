@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -g -std=c17
+CFLAGS := -g -std=gnu17
 CPPFLAGS := -MP -MMD
 LDFLAGS := -lm -lSDL2 -lSDL2_image
 
