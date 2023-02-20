@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -g
+CFLAGS := -g -std=c17
 CPPFLAGS := -MP -MMD
 LDFLAGS := -lm -lSDL2 -lSDL2_image
 
@@ -12,6 +12,8 @@ SRCS := $(basename $(notdir $(wildcard $(SRC_DIR)/*.c)))
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
+.PHONY: all
+all: $(BUILD_DIR)/$(TARGET_EXEC)
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)

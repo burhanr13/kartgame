@@ -3,3 +3,5 @@
 *.dSYM
 main
 .DS_Store
+
+./build
