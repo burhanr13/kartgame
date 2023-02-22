@@ -8,7 +8,7 @@ extern SDL_PixelFormat* format;
 
 const float RENDER_ASPECT_RATIO = (float)SCREEN_HEIGHT / SCREEN_WIDTH * 4 / 3;
 
-World* createWorld(char* imgFile, Uint32 color) {
+World* createWorld(char* imgFile) {
     World* w = malloc(sizeof(World));
 
     SDL_Surface* s = IMG_Load(imgFile);
@@ -18,7 +18,6 @@ World* createWorld(char* imgFile, Uint32 color) {
     w->target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                   SDL_TEXTUREACCESS_STREAMING, RENDER_RES_W,
                                   RENDER_RES_H);
-    w->color = color;
 
     return w;
 }
@@ -118,7 +117,7 @@ float calculateSpriteScale(Camera* cam, float v) {
 
 void projectCameraViewOfSurfaceOntoTexture(SDL_Texture* target, int targetW,
                                            int targetH, SDL_Surface* src,
-                                           Camera* cam, Uint32 color) {
+                                           Camera* cam) {
     void* pixelData = NULL;
     int pitch;
     SDL_LockTexture(target, NULL, &pixelData, &pitch);
@@ -150,12 +149,13 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture* target, int targetW,
             x = xMod + rotX * cosfa;
             y = yMod + rotX * sinfa;
 
-            if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1) {
-                pixels[i * targetW + j] = color;
-            } else {
-                // pixels[i * targetW + j] = magFilter(x, y, srcPixels, src->w);
-                pixels[i * targetW + j] = srcPixels[(int)y * src->w + (int)x];
-            }
+            if (x < 1) x = 1;
+            if (x >= src->w - 1) x = src->w - 2;
+            if (y < 1) y = 1;
+            if (y >= src->h - 1) y = src->h - 2;
+
+            // pixels[i * targetW + j] = magFilter(x, y, srcPixels, src->w);
+            pixels[i * targetW + j] = srcPixels[(int)y * src->w + (int)x];
         }
     }
 
@@ -189,7 +189,7 @@ int cmpV(const void* a, const void* b) {
 }
 
 void renderSprites(Sprite* sprites[], int nsprites, Camera* cam) {
-    float u, v;
+    float u = 0, v = 0;
     struct SpriteUV inView[nsprites];
     int nInView = 0;
     int i;
@@ -212,7 +212,7 @@ void renderSprites(Sprite* sprites[], int nsprites, Camera* cam) {
 
 void renderCourse(World* w, Camera* cam) {
     projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H,
-                                          w->srcImg, cam, w->color);
+                                          w->srcImg, cam);
     SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH,
                           2 * SCREEN_HEIGHT / 3};
     SDL_RenderCopy(renderer, w->target, NULL, &fieldRect);

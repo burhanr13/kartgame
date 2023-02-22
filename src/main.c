@@ -113,7 +113,7 @@ void updateTimeValues() {
 int main(int argc, char* argv[]) {
     init();
 
-    world = createWorld("resources/course.png", 0xFF76B0F5);
+    world = createWorld("resources/course.png");
     makeSprites();
 
     kart = createKart(1000, 1000, 0, kartTex, 10);

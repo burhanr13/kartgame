@@ -9,11 +9,9 @@
 const extern float elapsedTime;
 
 Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w) {
-    Kart* kart = malloc(sizeof(Kart));
+    Kart* kart = calloc(1, sizeof(Kart));
     initSprite(&kart->s, tex, x, y, w);
     kart->rot = rot;
-    kart->speed = 0;
-    memset(&kart->flags, 0, sizeof(kart->flags));
     kart->info.MAX_SPEED = 300;
     kart->info.TURN_SPEED = 2;
     kart->info.INIT_DRIFT_TURN = 1;
