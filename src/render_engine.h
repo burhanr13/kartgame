@@ -10,9 +10,9 @@
 #define RENDER_RES_W 512
 #define RENDER_RES_H 512
 
-World *createWorld(char *imgFile, Uint32 color);
-void destroyWorld(World *w);
-void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, int w);
-void renderCourse(World *world, Camera *camera);
+World* createWorld(char* imgFile, Uint32 color);
+void destroyWorld(World* w);
+void initSprite(Sprite* s, SDL_Texture* tex, float x, float y, int w);
+void renderCourse(World* world, Camera* camera);
 
 #endif

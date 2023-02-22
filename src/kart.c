@@ -8,9 +8,8 @@
 
 const extern float elapsedTime;
 
-Kart *createKart(float x, float y, float rot, SDL_Texture *tex, int w)
-{
-    Kart *kart = malloc(sizeof(Kart));
+Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w) {
+    Kart* kart = malloc(sizeof(Kart));
     initSprite(&kart->s, tex, x, y, w);
     kart->rot = rot;
     kart->speed = 0;
@@ -26,14 +25,11 @@ Kart *createKart(float x, float y, float rot, SDL_Texture *tex, int w)
     return kart;
 }
 
-void kartHandleEvent(Kart *k, SDL_Event *e)
-{
-    switch (e->type)
-    {
+void kartHandleEvent(Kart* k, SDL_Event* e) {
+    switch (e->type) {
     case SDL_KEYDOWN:
     case SDL_KEYUP:
-        switch (e->key.keysym.sym)
-        {
+        switch (e->key.keysym.sym) {
         case SDLK_w:
             k->flags.isAccel = e->type == SDL_KEYDOWN;
             break;
@@ -55,16 +51,13 @@ void kartHandleEvent(Kart *k, SDL_Event *e)
             // }
             break;
         case SDLK_SPACE:
-            if (e->type == SDL_KEYDOWN && !e->key.repeat)
-            {
+            if (e->type == SDL_KEYDOWN && !e->key.repeat) {
                 k->flags.driftL = k->flags.turnL;
                 k->flags.driftR = k->flags.turnR;
                 k->rot -= (k->flags.driftR - k->flags.driftL) * M_PI_4;
                 k->driftTurnSpeed = k->info.INIT_DRIFT_TURN;
                 k->speed *= 0.75;
-            }
-            else if (e->type == SDL_KEYUP)
-            {
+            } else if (e->type == SDL_KEYUP) {
                 k->flags.driftL = k->flags.driftR = 0;
             }
             break;
@@ -73,26 +66,24 @@ void kartHandleEvent(Kart *k, SDL_Event *e)
     }
 }
 
-void kartMove(Kart *k)
-{
-    float acSpeed = k->speed * (k->flags.turnL | k->flags.turnR ? k->info.TURN_MULT : 1) * elapsedTime;
+void kartMove(Kart* k) {
+    float acSpeed = k->speed *
+                    (k->flags.turnL | k->flags.turnR ? k->info.TURN_MULT : 1) *
+                    elapsedTime;
     k->s.x += acSpeed * sinf(k->rot);
     k->s.y -= acSpeed * cosf(k->rot);
 }
 
-void kartTranslateAngle(Kart *k, float angle, float distance)
-{
+void kartTranslateAngle(Kart* k, float angle, float distance) {
     k->s.x += distance * sinf(k->rot + angle);
     k->s.y -= distance * cosf(k->rot + angle);
 }
 
-void updateKart(Kart *k)
-{
+void updateKart(Kart* k) {
     int driftDir = k->flags.driftR - k->flags.driftL;
     int turnDir = k->flags.turnR - k->flags.turnL;
 
-    if (driftDir != 0)
-    {
+    if (driftDir != 0) {
         k->driftTurnSpeed += driftDir * turnDir * 2 * elapsedTime;
 
         if (k->driftTurnSpeed > k->info.MAX_DRIFT_TURN)
@@ -107,29 +98,21 @@ void updateKart(Kart *k)
 
     k->rot -= turnDir * k->info.TURN_SPEED * elapsedTime;
 
-    if (k->flags.isAccel)
-    {
+    if (k->flags.isAccel) {
         k->speed += k->info.ACCELERATION * elapsedTime;
-    }
-    else if (k->flags.isDecel)
-    {
+    } else if (k->flags.isDecel) {
         k->speed -= k->info.ACCELERATION * elapsedTime;
-    }
-    else
-    {
-        k->speed += k->info.FRICTION * elapsedTime * (k->speed > 0 ? -1 : (k->speed < 0 ? 1 : 0));
-        if (fabsf(k->speed) < EPSILON)
-        {
+    } else {
+        k->speed += k->info.FRICTION * elapsedTime *
+                    (k->speed > 0 ? -1 : (k->speed < 0 ? 1 : 0));
+        if (fabsf(k->speed) < EPSILON) {
             k->speed = 0;
         }
     }
 
-    if (k->speed > k->info.MAX_SPEED)
-    {
+    if (k->speed > k->info.MAX_SPEED) {
         k->speed = k->info.MAX_SPEED;
-    }
-    else if (k->speed < -k->info.MAX_SPEED)
-    {
+    } else if (k->speed < -k->info.MAX_SPEED) {
         k->speed = -k->info.MAX_SPEED;
     }
 

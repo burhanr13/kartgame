@@ -3,34 +3,33 @@
 #include <SDL2/SDL_image.h>
 #include <math.h>
 
-extern SDL_Renderer *renderer;
-extern SDL_PixelFormat *format;
+extern SDL_Renderer* renderer;
+extern SDL_PixelFormat* format;
 
 const float RENDER_ASPECT_RATIO = (float)SCREEN_HEIGHT / SCREEN_WIDTH * 4 / 3;
 
-World *createWorld(char *imgFile, Uint32 color)
-{
-    World *w = malloc(sizeof(World));
+World* createWorld(char* imgFile, Uint32 color) {
+    World* w = malloc(sizeof(World));
 
-    SDL_Surface *s = IMG_Load(imgFile);
+    SDL_Surface* s = IMG_Load(imgFile);
     w->srcImg = SDL_ConvertSurface(s, format, 0);
     SDL_FreeSurface(s);
 
-    w->target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RENDER_RES_W, RENDER_RES_H);
+    w->target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                                  SDL_TEXTUREACCESS_STREAMING, RENDER_RES_W,
+                                  RENDER_RES_H);
     w->color = color;
 
     return w;
 }
 
-void destroyWorld(World *w)
-{
+void destroyWorld(World* w) {
     SDL_FreeSurface(w->srcImg);
     SDL_DestroyTexture(w->target);
     free(w);
 }
 
-void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, int w)
-{
+void initSprite(Sprite* s, SDL_Texture* tex, float x, float y, int w) {
     s->x = x;
     s->y = y;
     s->z = 0;
@@ -40,8 +39,7 @@ void initSprite(Sprite *s, SDL_Texture *tex, float x, float y, int w)
     s->w = w;
 }
 
-Uint32 interpColor(Uint32 c0, Uint32 c1, float t)
-{
+Uint32 interpColor(Uint32 c0, Uint32 c1, float t) {
     int a0, a1, r0, r1, g0, g1, b0, b1;
     a0 = (c0 >> 24) & 0xff;
     a1 = (c1 >> 24) & 0xff;
@@ -60,8 +58,7 @@ Uint32 interpColor(Uint32 c0, Uint32 c1, float t)
     return a << 24 | r << 16 | g << 8 | b << 0;
 }
 
-Uint32 magFilter(float x, float y, Uint32 *pixels, int w)
-{
+Uint32 magFilter(float x, float y, Uint32* pixels, int w) {
     int pX = (int)x;
     int pY = (int)y;
     x -= pX;
@@ -73,30 +70,21 @@ Uint32 magFilter(float x, float y, Uint32 *pixels, int w)
     Uint32 d = pixels[(pY + 1) * w + pX];
     Uint32 c2 = 0;
 
-    if (x < 0.5)
-    {
+    if (x < 0.5) {
         col = interpColor(col, l, 0.5 - x);
-        if (y < 0.5)
-        {
+        if (y < 0.5) {
             c2 = interpColor(u, pixels[(pY - 1) * w + pX - 1], 0.5 - x);
             col = interpColor(col, c2, 0.5 - y);
-        }
-        else
-        {
+        } else {
             c2 = interpColor(d, pixels[(pY + 1) * w + pX - 1], 0.5 - x);
             col = interpColor(col, c2, y - 0.5);
         }
-    }
-    else
-    {
+    } else {
         col = interpColor(col, r, x - 0.5);
-        if (y < 0.5)
-        {
+        if (y < 0.5) {
             c2 = interpColor(u, pixels[(pY - 1) * w + pX + 1], x - 0.5);
             col = interpColor(col, c2, 0.5 - y);
-        }
-        else
-        {
+        } else {
             c2 = interpColor(d, pixels[(pY + 1) * w + pX + 1], x - 0.5);
             col = interpColor(col, c2, y - 0.5);
         }
@@ -105,43 +93,38 @@ Uint32 magFilter(float x, float y, Uint32 *pixels, int w)
     return col;
 }
 
-void cameraToSurfaceCoord(Camera *cam, float u, float v, float *x, float *y)
-{
-    if (v == 0)
-        return;
+void cameraToSurfaceCoord(Camera* cam, float u, float v, float* x, float* y) {
+    if (v == 0) return;
     float rotX = cam->z * (2 * u - 1) / (RENDER_ASPECT_RATIO * v);
     float rotY = cam->z * cam->f / v;
     *x = cam->x + rotX * cosf(cam->angle) + rotY * sinf(cam->angle);
     *y = cam->y + rotX * sinf(cam->angle) - rotY * cosf(cam->angle);
 }
 
-void surfaceToCameraCoord(Camera *cam, float x, float y, float *u, float *v)
-{
+void surfaceToCameraCoord(Camera* cam, float x, float y, float* u, float* v) {
     float relX = x - cam->x;
     float relY = cam->y - y;
     float rotX = relX * cosf(cam->angle) - relY * sinf(cam->angle);
     float rotY = relX * sinf(cam->angle) + relY * cosf(cam->angle);
-    if (rotY == 0)
-        return;
+    if (rotY == 0) return;
     *u = (RENDER_ASPECT_RATIO * rotX * cam->f / rotY + 1) / 2;
     *v = cam->z * cam->f / rotY;
 }
 
-float calculateSpriteScale(Camera *cam, float v)
-{
-    if (cam->z == 0)
-        return 0;
+float calculateSpriteScale(Camera* cam, float v) {
+    if (cam->z == 0) return 0;
     return SCREEN_WIDTH * RENDER_ASPECT_RATIO * v / (2 * cam->z);
 }
 
-void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int targetH, SDL_Surface *src, Camera *cam, Uint32 color)
-{
-    void *pixelData = NULL;
+void projectCameraViewOfSurfaceOntoTexture(SDL_Texture* target, int targetW,
+                                           int targetH, SDL_Surface* src,
+                                           Camera* cam, Uint32 color) {
+    void* pixelData = NULL;
     int pitch;
     SDL_LockTexture(target, NULL, &pixelData, &pitch);
-    Uint32 *pixels = (Uint32 *)pixelData;
+    Uint32* pixels = (Uint32*)pixelData;
     SDL_LockSurface(src);
-    Uint32 *srcPixels = (Uint32 *)src->pixels;
+    Uint32* srcPixels = (Uint32*)src->pixels;
 
     float u, v;
     float x, y;
@@ -152,8 +135,7 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
     float rotX, rotY;
     float xMod, yMod;
 
-    for (int i = 1; i < targetH; i++)
-    {
+    for (int i = 1; i < targetH; i++) {
         v = (float)i / targetH;
 
         rotXmod = cam->z / (RENDER_ASPECT_RATIO * v);
@@ -161,20 +143,16 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
         xMod = cam->x + rotY * sinfa;
         yMod = cam->y - rotY * cosfa;
 
-        for (int j = 0; j < targetW; j++)
-        {
+        for (int j = 0; j < targetW; j++) {
             u = (float)j / targetW;
             rotX = rotXmod * (2 * u - 1);
 
             x = xMod + rotX * cosfa;
             y = yMod + rotX * sinfa;
 
-            if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1)
-            {
+            if (x < 1 || y < 1 || x >= src->w - 1 || y >= src->h - 1) {
                 pixels[i * targetW + j] = color;
-            }
-            else
-            {
+            } else {
                 // pixels[i * targetW + j] = magFilter(x, y, srcPixels, src->w);
                 pixels[i * targetW + j] = srcPixels[(int)y * src->w + (int)x];
             }
@@ -185,42 +163,39 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture *target, int targetW, int
     SDL_UnlockTexture(target);
 }
 
-void renderSprite(Sprite *o, float u, float v, Camera *cam)
-{
+void renderSprite(Sprite* o, float u, float v, Camera* cam) {
     float scale = calculateSpriteScale(cam, v);
     float scaledW = scale * o->w;
     float scaledH = scale * o->h;
     float scaledZ = scale * o->z;
-    if (scaledW < 1 || scaledH < 1 || scaledW > SCREEN_WIDTH || scaledH > SCREEN_HEIGHT)
+    if (scaledW < 1 || scaledH < 1 || scaledW > SCREEN_WIDTH ||
+        scaledH > SCREEN_HEIGHT)
         return;
-    SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2, ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH - scaledZ, scaledW, scaledH};
+    SDL_Rect r = {u * SCREEN_WIDTH - scaledW / 2,
+                  ((1 + 2 * v) / 3) * SCREEN_HEIGHT - scaledH - scaledZ,
+                  scaledW, scaledH};
     SDL_RenderCopy(renderer, o->texture, NULL, &r);
 }
 
-struct SpriteUV
-{
-    Sprite *s;
+struct SpriteUV {
+    Sprite* s;
     float u, v;
 };
 
-int cmpV(const void *a, const void *b)
-{
-    struct SpriteUV m = *(struct SpriteUV *)a;
-    struct SpriteUV n = *(struct SpriteUV *)b;
+int cmpV(const void* a, const void* b) {
+    struct SpriteUV m = *(struct SpriteUV*)a;
+    struct SpriteUV n = *(struct SpriteUV*)b;
     return (m.v > n.v) ? 1 : ((m.v < n.v) ? -1 : 0);
 }
 
-void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
-{
+void renderSprites(Sprite* sprites[], int nsprites, Camera* cam) {
     float u, v;
     struct SpriteUV inView[nsprites];
     int nInView = 0;
     int i;
-    for (i = 0; i < nsprites; i++)
-    {
+    for (i = 0; i < nsprites; i++) {
         surfaceToCameraCoord(cam, sprites[i]->x, sprites[i]->y, &u, &v);
-        if (-0.25 < u && u < 1.25 && v < 1.5)
-        {
+        if (-0.25 < u && u < 1.25 && v < 1.5) {
             inView[nInView].s = sprites[i];
             inView[nInView].u = u;
             inView[nInView].v = v;
@@ -230,16 +205,16 @@ void renderSprites(Sprite *sprites[], int nsprites, Camera *cam)
 
     qsort(inView, nInView, sizeof(struct SpriteUV), cmpV);
 
-    for (i = 0; i < nInView; i++)
-    {
+    for (i = 0; i < nInView; i++) {
         renderSprite(inView[i].s, inView[i].u, inView[i].v, cam);
     }
 }
 
-void renderCourse(World *w, Camera *cam)
-{
-    projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H, w->srcImg, cam, w->color);
-    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH, 2 * SCREEN_HEIGHT / 3};
+void renderCourse(World* w, Camera* cam) {
+    projectCameraViewOfSurfaceOntoTexture(w->target, RENDER_RES_W, RENDER_RES_H,
+                                          w->srcImg, cam, w->color);
+    SDL_Rect fieldRect = {0, SCREEN_HEIGHT / 3, SCREEN_WIDTH,
+                          2 * SCREEN_HEIGHT / 3};
     SDL_RenderCopy(renderer, w->target, NULL, &fieldRect);
     renderSprites(w->sprites, w->nSprites, cam);
 }
