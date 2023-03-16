@@ -3,26 +3,36 @@
 
 #include <SDL2/SDL.h>
 
-typedef struct camera_s {
+typedef struct _Camera {
     float x, y, z;
     float angle;
     float f;
 } Camera;
 
-typedef struct sprite_s {
+struct _World;
+
+typedef struct _Sprite {
     float x, y, z;
     int w, h;
     SDL_Texture* texture;
+
+    struct _World* world;
+
+    struct _Sprite* prev;
+    struct _Sprite* next;
 } Sprite;
 
-typedef struct world_s {
+typedef struct _World {
     SDL_Surface* srcImg;
     SDL_Texture* target;
-    Sprite** head;
+    SDL_Surface* collision;
+    int scale;
+
+    Sprite head;
     int nSprites;
 } World;
 
-typedef struct kart_s {
+typedef struct _Kart {
     Sprite s;
     float rot;
     float speed;
@@ -47,7 +57,7 @@ typedef struct kart_s {
     } info;
 } Kart;
 
-typedef struct followcam_s {
+typedef struct _KartFollowCam {
     Camera cam;
     Kart* kart;
     float followDist;

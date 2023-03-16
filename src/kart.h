@@ -4,7 +4,9 @@
 #include "types.h"
 #include <SDL2/SDL.h>
 
-Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w);
+Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w, World* world);
+void destroyKart(Kart* k);
+
 void kartHandleEvent(Kart* k, SDL_Event* e);
 void updateKart(Kart* k);
 

@@ -8,9 +8,10 @@
 
 const extern float elapsedTime;
 
-Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w) {
+Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w,
+                 World* world) {
     Kart* kart = calloc(1, sizeof(Kart));
-    initSprite(&kart->s, tex, x, y, w);
+    initSprite(&kart->s, tex, x, y, w, world);
     kart->rot = rot;
     kart->info.MAX_SPEED = 300;
     kart->info.TURN_SPEED = 2;
@@ -21,6 +22,11 @@ Kart* createKart(float x, float y, float rot, SDL_Texture* tex, int w) {
     kart->info.TURN_MULT = 0.7;
     kart->info.FRICTION = 200;
     return kart;
+}
+
+void destroyKart(Kart* k) {
+    unlinkSprite(&k->s);
+    free(k);
 }
 
 void kartHandleEvent(Kart* k, SDL_Event* e) {

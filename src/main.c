@@ -52,13 +52,15 @@ void end() {
     format = NULL;
 
     SDL_DestroyTexture(kartTex);
-    free(kart);
+    destroyKart(kart);
     free(kCam);
 
-    SDL_DestroyTexture(world->sprites[1]->texture);
+    SDL_DestroyTexture(world->head.next->texture);
 
     for (int i = 1; i < world->nSprites; i++) {
-        free(world->sprites[i]);
+        Sprite* s = world->head.next;
+        unlinkSprite(s);
+        free(s);
     }
 
     destroyWorld(world);
@@ -69,21 +71,15 @@ void end() {
 }
 
 void makeSprites() {
-    world->sprites = malloc(15 * sizeof(Sprite*));
-    world->nSprites = 15;
     SDL_Texture* tex = IMG_LoadTexture(renderer, "resources/object.png");
     int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450},
                       {1260, 450},  {580, 1030},  {1290, 150},  {1500, 170},
                       {1920, 140},  {1950, 440},  {1770, 1220}, {1890, 1420},
                       {790, 1470},  {1940, 1250}, {1690, 980}};
-    int w;
-    int h;
-    SDL_QueryTexture(tex, NULL, NULL, &w, &h);
-    Sprite* ptr;
+    
     for (int i = 0; i < 15; i++) {
-        ptr = malloc(sizeof(Sprite));
-        initSprite(ptr, tex, pos[i][0], pos[i][1], 17);
-        world->sprites[i] = ptr;
+        Sprite* ptr = malloc(sizeof(Sprite));
+        initSprite(ptr, tex, pos[i][0], pos[i][1], 17, world);
     }
 }
 
@@ -105,21 +101,20 @@ void renderScene() {
 
 void updateTimeValues() {
     frameCount++;
-    elapsedTime = (float)(SDL_GetTicks64() - lastFrameTime) / 1000;
+    elapsedTime = (float) (SDL_GetTicks64() - lastFrameTime) / 1000;
     lastFrameTime = SDL_GetTicks64();
-    fps = 1000 * (float)frameCount / SDL_GetTicks64();
+    fps = 1000 * (float) frameCount / SDL_GetTicks64();
 }
 
 int main(int argc, char* argv[]) {
     init();
 
-    world = createWorld("resources/testcourse.png");
+    world = createWorld("resources/testcourse.png", "resources/testcourse.png",
+                        1000);
     makeSprites();
 
-    kart = createKart(1000, 1000, 0, kartTex, 10);
+    kart = createKart(100, 500, 0, kartTex, 10, world);
     kCam = createFollowCam(kart);
-
-    world->sprites[0] = &kart->s;
 
     SDL_Event e;
 
