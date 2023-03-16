@@ -43,21 +43,16 @@ void init() {
 
 void end() {
 
-    SDL_DestroyWindow(window);
-    window = NULL;
-    SDL_DestroyRenderer(renderer);
-    renderer = NULL;
-
-    SDL_FreeFormat(format);
-    format = NULL;
-
     SDL_DestroyTexture(kartTex);
+    kartTex = NULL;
     destroyKart(kart);
+    kart = NULL;
     free(kCam);
+    kCam = NULL;
 
     SDL_DestroyTexture(world->head.next->texture);
 
-    for (int i = 1; i < world->nSprites; i++) {
+    for (int i = 0; i < world->nSprites; i++) {
         Sprite* s = world->head.next;
         unlinkSprite(s);
         free(s);
@@ -66,8 +61,16 @@ void end() {
     destroyWorld(world);
     world = NULL;
 
-    SDL_Quit();
+    SDL_DestroyRenderer(renderer);
+    renderer = NULL;
+    SDL_DestroyWindow(window);
+    window = NULL;
+
+    SDL_FreeFormat(format);
+    format = NULL;
+
     IMG_Quit();
+    SDL_Quit();
 }
 
 void makeSprites() {

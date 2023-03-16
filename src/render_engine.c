@@ -32,6 +32,7 @@ World* createWorld(char* mapFile, char* collFile, int scale) {
 
 void destroyWorld(World* w) {
     SDL_FreeSurface(w->srcImg);
+    SDL_FreeSurface(w->collision);
     SDL_DestroyTexture(w->target);
     free(w);
 }
@@ -57,7 +58,7 @@ void initSprite(Sprite* s, SDL_Texture* tex, float x, float y, int w,
 
 void unlinkSprite(Sprite* s) {
     s->world->nSprites--;
-    s->next->prev = s->prev;
+    if(s->next) s->next->prev = s->prev;
     s->prev->next = s->next;
 }
 
