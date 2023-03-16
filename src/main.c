@@ -23,6 +23,7 @@ KartFollowCam* kCam;
 Kart* kart;
 
 SDL_Texture* kartTex;
+SDL_Texture* objTex;
 
 int quit = SDL_FALSE;
 
@@ -39,20 +40,21 @@ void init() {
     format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
 
     kartTex = IMG_LoadTexture(renderer, "resources/driver.png");
+    objTex = IMG_LoadTexture(renderer, "resources/object.png");
 }
 
 void end() {
 
     SDL_DestroyTexture(kartTex);
     kartTex = NULL;
+    SDL_DestroyTexture(objTex);
+    objTex = NULL;
     destroyKart(kart);
     kart = NULL;
     free(kCam);
     kCam = NULL;
 
-    SDL_DestroyTexture(world->head.next->texture);
-
-    for (int i = 0; i < world->nSprites; i++) {
+    while (world->head.next) {
         Sprite* s = world->head.next;
         unlinkSprite(s);
         free(s);
@@ -74,7 +76,6 @@ void end() {
 }
 
 void makeSprites() {
-    SDL_Texture* tex = IMG_LoadTexture(renderer, "resources/object.png");
     int pos[15][2] = {{1070, 1070}, {1070, 1240}, {1070, 1300}, {1150, 450},
                       {1260, 450},  {580, 1030},  {1290, 150},  {1500, 170},
                       {1920, 140},  {1950, 440},  {1770, 1220}, {1890, 1420},
@@ -82,7 +83,7 @@ void makeSprites() {
     
     for (int i = 0; i < 15; i++) {
         Sprite* ptr = malloc(sizeof(Sprite));
-        initSprite(ptr, tex, pos[i][0], pos[i][1], 17, world);
+        initSprite(ptr, objTex, pos[i][0], pos[i][1], 17, world);
     }
 }
 

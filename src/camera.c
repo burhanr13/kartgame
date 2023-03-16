@@ -26,6 +26,8 @@ KartFollowCam* createFollowCam(Kart* kart) {
 
 void updateFollowCamera(KartFollowCam* c) {
     c->cam.angle = c->kart->rot;
+    if (c->kart->flags.driftL) c->cam.angle += M_PI_4;
+    if (c->kart->flags.driftR) c->cam.angle -= M_PI_4;
     c->cam.x = c->kart->s.x - c->followDist * sinf(c->cam.angle);
     c->cam.y = c->kart->s.y + c->followDist * cosf(c->cam.angle);
 }
