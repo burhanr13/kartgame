@@ -1,7 +1,7 @@
 CC := gcc
 CFLAGS := -g -std=gnu17
-CPPFLAGS := -MP -MMD
-LDFLAGS := -lm -lSDL2 -lSDL2_image
+CPPFLAGS := $(shell sdl2-config --cflags) -MP -MMD
+LDFLAGS := $(shell sdl2-config --libs) -lSDL2_image -lm
 
 BUILD_DIR := ./build
 SRC_DIR := ./src
@@ -16,7 +16,7 @@ DEPS := $(OBJS:.o=.d)
 all: $(BUILD_DIR)/$(TARGET_EXEC)
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $^
+	$(CC) -o $@ $(CFLAGS) $(CPPFLAGS) $^ $(LDFLAGS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(dir $@)

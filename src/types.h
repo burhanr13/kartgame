@@ -18,7 +18,7 @@ typedef struct sprite_s {
 typedef struct world_s {
     SDL_Surface* srcImg;
     SDL_Texture* target;
-    Sprite** sprites;
+    Sprite** head;
     int nSprites;
 } World;
 
