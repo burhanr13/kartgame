@@ -145,7 +145,6 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture* target, int targetW,
     int pitch;
     SDL_LockTexture(target, NULL, &pixelData, &pitch);
     Uint32* pixels = (Uint32*) pixelData;
-    SDL_LockSurface(src);
     Uint32* srcPixels = (Uint32*) src->pixels;
 
     float cosfa = cosf(cam->angle);
@@ -182,7 +181,6 @@ void projectCameraViewOfSurfaceOntoTexture(SDL_Texture* target, int targetW,
         }
     }
 
-    SDL_UnlockSurface(src);
     SDL_UnlockTexture(target);
 }
 
